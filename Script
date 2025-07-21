@@ -1,25 +1,54 @@
-//@version=5 indicator("Momentum Hunter - PRO", overlay=true)
+//@version=5
+indicator("Momentum Hunter - PRO", overlay=true)
 
-// === Input Parameters === rr_ratio = input.float(1.5, title="Risk / Reward Ratio") body_factor = input.float(1.5, title="Body Size Multiplier") range_factor = input.float(1.2, title="Range Size Multiplier") body_ratio_thresh = input.float(0.6, title="Body/Range Threshold") ema_filter_enabled = input.bool(true, title="Enable EMA200 Trend Filter") from_time = input.string("0900", title="Start Time (HHMM)") to_time = input.string("1600", title="End Time (HHMM)")
+// === Input Parameters ===
+rr_ratio = input.float(1.5, title="Risk / Reward Ratio")
+body_factor = input.float(1.5, title="Body Size Multiplier")
+range_factor = input.float(1.2, title="Range Size Multiplier")
+body_ratio_thresh = input.float(0.6, title="Body/Range Ratio Threshold")
+ema_filter_enabled = input.bool(true, title="Enable EMA200 Trend Filter")
+from_time = input.string("0900", title="Start Time (HHMM)")
+to_time = input.string("1600", title="End Time (HHMM)")
 
-// === Time Filter === start_time = str.tonumber(from_time) end_time   = str.tonumber(to_time) current_time = time("1", "HHmm") time_allowed = (current_time >= start_time and current_time <= end_time)
+// === Time Filter ===
+start_time = str.tonumber(from_time)
+end_time   = str.tonumber(to_time)
+current_time = time("1", "HHmm")
+time_allowed = (current_time >= start_time and current_time <= end_time)
 
-// === Candle Analysis === body = math.abs(close - open) bar_range = high - low body_ratio = body / bar_range
+// === Candle Calculations ===
+body = math.abs(close - open)
+bar_range = high - low
+body_ratio = body / bar_range
 
-avg_body = ta.sma(body, 20) avg_range = ta.sma(bar_range, 20) ema200 = ta.ema(close, 200)
+avg_body = ta.sma(body, 20)
+avg_range = ta.sma(bar_range, 20)
+ema200 = ta.ema(close, 200)
 
-// === Signal Conditions === trend_long = close > ema200 trend_short = close < ema200
+// === Signal Conditions ===
+trend_long = close > ema200
+trend_short = close < ema200
 
-bullish_signal = close > open and body > body_factor * avg_body and bar_range > range_factor * avg_range and body_ratio > body_ratio_thresh
+bullish_signal = close > open and 
+                 body > body_factor * avg_body and 
+                 bar_range > range_factor * avg_range and 
+                 body_ratio > body_ratio_thresh
 
-bearish_signal = open > close and body > body_factor * avg_body and bar_range > range_factor * avg_range and body_ratio > body_ratio_thresh
+bearish_signal = open > close and 
+                 body > body_factor * avg_body and 
+                 bar_range > range_factor * avg_range and 
+                 body_ratio > body_ratio_thresh
 
-final_buy = bullish_signal and time_allowed and (not ema_filter_enabled or trend_long) final_sell = bearish_signal and time_allowed and (not ema_filter_enabled or trend_short)
+final_buy = bullish_signal and time_allowed and (not ema_filter_enabled or trend_long)
+final_sell = bearish_signal and time_allowed and (not ema_filter_enabled or trend_short)
 
-// === Alert Conditions === alertcondition(final_buy, title="Buy Signal", message="[Momentum Hunter] BUY signal on {{ticker}} at {{close}} | RR: {{input("rr_ratio")}}") alertcondition(final_sell, title="Sell Signal", message="[Momentum Hunter] SELL signal on {{ticker}} at {{close}} | RR: {{input("rr_ratio")}}")
+// === Alert Conditions (Static messages required)
+alertcondition(final_buy, title="Buy Signal", message="[Momentum Hunter] BUY signal triggered")
+alertcondition(final_sell, title="Sell Signal", message="[Momentum Hunter] SELL signal triggered")
 
-// === Visual Markers === plotshape(final_buy, title="Buy Signal", location=location.belowbar, color=color.green, style=shape.labelup, text="BUY") plotshape(final_sell, title="Sell Signal", location=location.abovebar, color=color.red, style=shape.labeldown, text="SELL")
+// === Visual Markers ===
+plotshape(final_buy, title="Buy Signal", location=location.belowbar, color=color.green, style=shape.labelup, text="BUY")
+plotshape(final_sell, title="Sell Signal", location=location.abovebar, color=color.red, style=shape.labeldown, text="SELL")
 
-// === EMA200 Visualization === plot(ema_filter_enabled ? ema200 : na, title="EMA 200", color=color.orange, linewidth=2)
-
-
+// === EMA200 Plot ===
+plot(ema_filter_enabled ? ema200 : na, title="EMA 200", color=color.orange, linewidth=2)
